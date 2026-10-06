@@ -1,6 +1,6 @@
 cask "squidservers" do
   version "0.9.11"
-  sha256 "66520fdcf3776be75a0424ae0cd8a180d835b51051b0cc63d9ce68845f8b5aa3"
+  sha256 :no_check
 
   url "https://cdn.squidservers.com/squidservers-latest.dmg"
   name "SquidServers"
