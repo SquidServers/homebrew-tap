@@ -13,7 +13,7 @@ cask "squidservers" do
   end
 
   auto_updates true
-  depends_on macos: ">= :catalina"
+  depends_on macos: :catalina
 
   app "SquidServers.app"
 
@@ -21,6 +21,6 @@ cask "squidservers" do
     "~/Library/Application Support/squidservers",
     "~/Library/Logs/squidservers",
     "~/Library/Preferences/com.squidservers.app.plist",
-    "~/Library/Saved Application State/com.squidservers.app.savedState",
+    "~/Library/Saved Application State/com.squidservers.app.savedState"
   ]
 end
