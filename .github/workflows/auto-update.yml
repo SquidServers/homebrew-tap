@@ -1,0 +1,62 @@
+name: Auto-update Cask
+
+on:
+  schedule:
+    # Runs every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check-and-update:
+    runs-on: macos-latest
+    steps:
+      - name: Check out tap repository
+        uses: actions/checkout@v4
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@main
+
+      - name: Check latest version from CDN and update Cask
+        id: update_cask
+        run: |
+          set -e
+          # 1. Fetch live version from latest-mac.yml
+          LATEST_VERSION=$(curl -sSL "https://cdn.squidservers.com/latest-mac.yml" | grep -E '^version:' | awk '{print $2}' | tr -d '\r\n')
+          
+          if [ -z "$LATEST_VERSION" ]; then
+            echo "Failed to retrieve latest version from CDN."
+            exit 1
+          fi
+
+          echo "CDN latest version: $LATEST_VERSION"
+
+          # 2. Extract current version in Cask
+          CURRENT_VERSION=$(grep -E '^\s*version\s+"' Casks/squidservers.rb | awk -F'"' '{print $2}')
+          echo "Current Cask version: $CURRENT_VERSION"
+
+          if [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
+            echo "New version detected ($LATEST_VERSION != $CURRENT_VERSION). Updating Cask..."
+            sed -i '' "s/version \"$CURRENT_VERSION\"/version \"$LATEST_VERSION\"/" Casks/squidservers.rb
+            echo "updated=true" >> "$GITHUB_OUTPUT"
+            echo "new_version=$LATEST_VERSION" >> "$GITHUB_OUTPUT"
+          else
+            echo "Cask is already up to date with version $CURRENT_VERSION."
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate Cask syntax
+        if: steps.update_cask.outputs.updated == 'true'
+        run: |
+          brew ruby -- -c Casks/squidservers.rb
+
+      - name: Commit and push changes
+        if: steps.update_cask.outputs.updated == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/squidservers.rb
+          git commit -m "chore(cask): bump squidservers to ${{ steps.update_cask.outputs.new_version }}"
+          git push origin main
