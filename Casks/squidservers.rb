@@ -1,5 +1,5 @@
 cask "squidservers" do
-  version "0.10.0"
+  version "0.10.1"
   sha256 :no_check
 
   url "https://cdn.squidservers.com/squidservers-latest.dmg"
